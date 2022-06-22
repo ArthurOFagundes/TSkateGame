@@ -21,6 +21,8 @@ black = (0, 0, 0)
 window = pygame.display.set_mode((width, height))
 
 pygame.display.set_caption('T-Skate Game')
+gameIcon = pygame.image.load(os.path.join(images_directory, "TskateIcon.png"))
+pygame.display.set_icon(gameIcon)
 
 sprite_sheet = pygame.image.load(os.path.join(
     images_directory, "skateSpriteSheet.png")).convert_alpha()
