@@ -1,3 +1,4 @@
+from difflib import restore
 import pygame
 from pygame.locals import *
 from sys import exit
@@ -15,6 +16,7 @@ width = 640
 height = 480
 
 white = (255, 255, 255)
+black = (0, 0, 0)
 
 window = pygame.display.set_mode((width, height))
 
@@ -27,8 +29,29 @@ collision_sound = pygame.mixer.Sound(
     os.path.join(sounds_directory, "death_sound.wav"))
 collision_sound.set_volume(1)
 
+point_sound = pygame.mixer.Sound(os.path.join(sounds_directory, "score_sound.wav"))
+point_sound.set_volume(1)
+
 collided = False
 
+points = 0
+
+game_velocity = 10
+
+def mensage_show(msg, size, color):
+    font = pygame.font.SysFont("comicsanssms", size, True, False)
+    mensage = f"{msg}"
+    text_formatted = font.render(mensage, False, color)
+    return text_formatted
+
+def restart_game():
+    global points, game_velocity, collided
+    points = 0
+    game_velocity = 10
+    collided = False
+    barrier.rect.x = width
+    skateboard.rect.y = height - 31 - 48
+    skateboard.ollie = False
 
 class Skate(pygame.sprite.Sprite):
     def __init__(self):
@@ -55,12 +78,12 @@ class Skate(pygame.sprite.Sprite):
 
     def update(self):
         if self.ollie == True:
-            if self.rect.y <= 250:
+            if self.rect.y <= 300:
                 self.ollie = False
-            self.rect.y -= 20
+            self.rect.y -= 15
         else:
             if self.rect.y < self.pos_y_init:
-                self.rect.y += 20
+                self.rect.y += 10
             else:
                 self.rect.y = self.pos_y_init
 
@@ -78,7 +101,7 @@ class Clounds(pygame.sprite.Sprite):
         if self.rect.topright[0] < 0:
             self.rect.x = width
             self.rect.y = randrange(50, 200, 50)
-        self.rect.x -= 10
+        self.rect.x -= game_velocity
 
 
 class Streets(pygame.sprite.Sprite):
@@ -93,7 +116,7 @@ class Streets(pygame.sprite.Sprite):
     def update(self):
         if self.rect.topright[0] < 0:
             self.rect.x = width
-        self.rect.x -= 10
+        self.rect.x -= game_velocity
 
 
 class Barrier(pygame.sprite.Sprite):
@@ -108,7 +131,7 @@ class Barrier(pygame.sprite.Sprite):
     def update(self):
         if self.rect.topright[0] < 0:
             self.rect.x = width
-        self.rect.x -= 10
+        self.rect.x -= game_velocity
 
 
 all_sprites = pygame.sprite.Group()
@@ -139,10 +162,13 @@ while True:
             exit()
         if event.type == KEYDOWN:
             if event.key == K_SPACE or event.key == K_UP:
-                if skateboard.rect.y != skateboard.pos_y_init:
+                if skateboard.rect.y != skateboard.pos_y_init or collided == True:
                     pass
                 else:
                     skateboard.doOllie()
+
+            if event.key == K_r and collided == True:
+                restart_game()
 
     collisions = pygame.sprite.spritecollide(
         skateboard, obstacle_group, False, pygame.sprite.collide_mask)
@@ -155,9 +181,31 @@ while True:
         pass
 
     if collided == True:
-        pass
+        if points % 100 == 0:
+            points += 1
+        
+        game_over = mensage_show("GAME OVER", 40, black)
+        window.blit(game_over,(width//2 - 105, height//2.5))
+
+        death_points = mensage_show(f"Você morreu com: {points}", 30, black)
+        window.blit(death_points, (width//2 - 130, height//2.5 + 60))
+
+        restart_mensage = mensage_show('Pressione R para dar restart', 20, black)
+        window.blit(restart_mensage, (width//2 - 110 , height//2.5 + 120))
 
     else:
+        points += 1
         all_sprites.update()
+        points_view = mensage_show(f"Pontos: {points}", 40, black)
+        window.blit(points_view, (420, 30))
+
+
+    if points % 100 == 0:
+        point_sound.play()
+
+        if game_velocity >= 23:
+            game_velocity += 0
+        else:
+            game_velocity += 1
 
     pygame.display.flip()
