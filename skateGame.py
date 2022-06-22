@@ -32,7 +32,8 @@ class Skate(pygame.sprite.Sprite):
         self.index_list = 0
         self.image = self.skateboard_image[self.index_list]
         self.rect = self.image.get_rect()
-        self.rect.center = (100, height - 90)
+        self.rect.center = (100, height - 32)
+
 
 class Clounds(pygame.sprite.Sprite):
     def __init__(self):
@@ -50,6 +51,21 @@ class Clounds(pygame.sprite.Sprite):
         self.rect.x -= 10
 
 
+class Streets(pygame.sprite.Sprite):
+    def __init__(self, pos_x):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = sprite_sheet.subsurface((2*32, 0), (32, 32))
+        self.image = pygame.transform.scale(self.image, (32*3, 32*3))
+        self.rect = self.image.get_rect()
+        self.rect.y = height - 64
+        self.rect.x = pos_x * 64
+
+    def update(self):
+        if self.rect.topright[0] < 0:
+            self.rect.x = width
+        self.rect.x -= 10
+
+
 all_sprites = pygame.sprite.Group()
 skateboard = Skate()
 all_sprites.add(skateboard)
@@ -57,6 +73,10 @@ all_sprites.add(skateboard)
 for i in range(4):
     clound = Clounds()
     all_sprites.add(clound)
+
+for i in range(12):
+    street = Streets(i)
+    all_sprites.add(street)
 
 clock = pygame.time.Clock()
 while True:
