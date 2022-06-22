@@ -4,9 +4,12 @@ from sys import exit
 import os
 from random import randrange
 
+pygame.init()
+pygame.mixer.init()
+
 main_directory = os.path.dirname(__file__)
 images_directory = os.path.join(main_directory, "images")
-sounds_dorectory = os.path.join(main_directory, "sounds")
+sounds_directory = os.path.join(main_directory, "sounds")
 
 width = 640
 height = 480
@@ -24,22 +27,40 @@ sprite_sheet = pygame.image.load(os.path.join(
 class Skate(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
+        self.ollie_sound = pygame.mixer.Sound(os.path.join(sounds_directory, "ollie_sound.wav"))
+        self.ollie_sound.set_volume(1)
         self.skateboard_image = []
         self.img = sprite_sheet.subsurface((0, 0), (32, 32))
-        self.img = pygame.transform.scale(self.img, (32*3, 32*3))
+        self.img = pygame.transform.scale(self.img, (96, 96))
         self.skateboard_image.append(self.img)
 
         self.index_list = 0
         self.image = self.skateboard_image[self.index_list]
         self.rect = self.image.get_rect()
+        self.pos_y_init = height - 32 - 48
         self.rect.center = (100, height - 32)
+        self.ollie = False
+    
+    def doOllie(self):
+        self.ollie = True
+        self.ollie_sound.play()
 
+    def update(self):
+        if self.ollie == True:
+            if self.rect.y <= 300:
+                self.ollie = False
+            self.rect.y -= 20
+        else:
+            if self.rect.y < self.pos_y_init:
+                self.rect.y += 20
+            else:
+                self.rect.y = self.pos_y_init
 
 class Clounds(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = sprite_sheet.subsurface((3*32, 0), (32, 32))
-        self.image = pygame.transform.scale(self.image, (32*3, 32*3))
+        self.image = sprite_sheet.subsurface((96, 0), (32, 32))
+        self.image = pygame.transform.scale(self.image, (96, 96))
         self.rect = self.image.get_rect()
         self.rect.y = randrange(50, 200, 50)
         self.rect.x = width - randrange(32, 320, 92)
@@ -54,8 +75,8 @@ class Clounds(pygame.sprite.Sprite):
 class Streets(pygame.sprite.Sprite):
     def __init__(self, pos_x):
         pygame.sprite.Sprite.__init__(self)
-        self.image = sprite_sheet.subsurface((2*32, 0), (32, 32))
-        self.image = pygame.transform.scale(self.image, (32*3, 32*3))
+        self.image = sprite_sheet.subsurface((64, 0), (32, 32))
+        self.image = pygame.transform.scale(self.image, (96, 96))
         self.rect = self.image.get_rect()
         self.rect.y = height - 64
         self.rect.x = pos_x * 64
@@ -86,6 +107,12 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             exit()
+        if event.type == KEYDOWN:
+            if event.key == K_SPACE or event.key == K_UP:
+                if skateboard.rect.y != skateboard.pos_y_init:
+                    pass
+                else:
+                    skateboard.doOllie()
 
     all_sprites.draw(window)
     all_sprites.update()
